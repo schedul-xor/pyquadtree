@@ -59,7 +59,8 @@ class Tree:
             
         return appending_node
 
-    def merge_parents_from_end(self,end_node):
+    @staticmethod
+    def merge_parents_from_end(end_node):
         while True:
             parent_node = end_node.parent
             if parent_node == None: break
@@ -76,7 +77,7 @@ class Tree:
                         found_existing_leaves = found_existing_leaves+1
                     elif status == NodeStatus.EMPTY_TERMINAL:
                         found_empty_leaves = found_empty_leaves+1
-                    elif status == Nodestatus.SURELY_MIXED:
+                    elif status == NodeStatus.SURELY_MIXED:
                         found_existing_leaves = found_existing_leaves+1
                         found_empty_leaves = found_empty_leaves+1
                     else:
@@ -85,10 +86,10 @@ class Tree:
             if there_are_still_gray_children_left: break
                 
             merged = False
-            if found_empty_leaves < 1:
+            if found_empty_leaves < 1 and found_existing_leaves > 0:
                 parent_node.status = NodeStatus.EXISTING_TERMINAL
                 merged = True
-            elif found_existing_leaves < 1:
+            elif found_existing_leaves < 1 and found_empty_leaves > 0:
                 parent_node.status = NodeStatus.EMPTY_TERMINAL
                 merged = True
             else:
@@ -110,7 +111,7 @@ class Tree:
             final_status = NodeStatus.EXISTING_TERMINAL
         end_node = self.append_rest_of_the_nodes_required(adding_path,appending_node,appending_path_index,final_status,value)
 
-        self.merge_parents_from_end(end_node)
+        Tree.merge_parents_from_end(end_node)
 
     def add_gray(self,adding_path):
         self.find_appending_node(adding_path)
@@ -197,3 +198,42 @@ class Tree:
         if appending_node == None:
             return None
         return appending_node.value
+
+    def mark_unknown_leaves(self,is_existing):
+        Tree.mark_unknown_leaves_under_node(self.root,is_existing)
+
+    @staticmethod
+    def mark_unknown_leaves_under_node(node,is_existing):
+        if node.status == NodeStatus.EXISTING_TERMINAL or node.status == NodeStatus.EMPTY_TERMINAL or node.status == NodeStatus.SURELY_MIXED:
+            return
+        for i in range(4):
+            child = node.children[i]
+            if child == None:
+                new_child_status = NodeStatus.EMPTY_TERMINAL
+                if is_existing:
+                    new_child_status = NodeStatus.EXISTING_TERMINAL
+                new_child_node = Node(None, new_child_status)
+                node.update_child(new_child_node,i)
+
+                new_child_node.parent = node
+                new_path_cache = node.path_cache[:]
+                new_path_cache.append(i)
+                new_child_node.path_cache = new_path_cache
+                Tree.merge_parents_from_end(new_child_node)
+            else:
+                Tree.mark_unknown_leaves_under_node(child,is_existing)
+
+    def for_each_leaves(self,callback):
+        Tree.for_each_leaves_in_node(self.root,callback)
+
+    @staticmethod
+    def for_each_leaves_in_node(node,callback):
+        is_leaf = True
+        for i in range(4):
+            child = node.children[i]
+            if child != None:
+                is_leaf = False
+                Tree.for_each_leaves_in_node(child,callback)
+        if not is_leaf: return
+
+        callback(node.path_cache,node.status,node.value)

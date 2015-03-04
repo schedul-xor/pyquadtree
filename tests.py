@@ -184,6 +184,33 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(r.children[0].children[1].parent,r.children[0])
 
         self.assertEqual(r.children[0].children[1].children[2].status,quadtree.qt.NodeStatus.SURELY_MIXED)
+        
+    def test_qt_5(self):
+        tree = quadtree.qt.Tree()
+        tree.add_terminal([0,1],True,'terminal0123')
+        tree.add_terminal([0,2],True,'terminal0122')
+        tree.add_terminal([0,0],True,'terminal0120')
+        tree.mark_unknown_leaves(False)
+
+        r = tree.root
+        self.assertNotEqual(r.children[0],None)
+        self.assertNotEqual(r.children[1],None)
+        self.assertNotEqual(r.children[2],None)
+        self.assertNotEqual(r.children[3],None)
+        self.assertEqual(r.status,quadtree.qt.NodeStatus.SURELY_MIXED)
+        self.assertEqual(r.children[0].status,quadtree.qt.NodeStatus.SURELY_MIXED)
+        self.assertEqual(r.children[1].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+        self.assertEqual(r.children[2].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+        self.assertEqual(r.children[3].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+        self.assertEqual(r.children[0].children[0].status,quadtree.qt.NodeStatus.EXISTING_TERMINAL)
+        self.assertEqual(r.children[0].children[1].status,quadtree.qt.NodeStatus.EXISTING_TERMINAL)
+        self.assertEqual(r.children[0].children[2].status,quadtree.qt.NodeStatus.EXISTING_TERMINAL)
+        self.assertEqual(r.children[0].children[3].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+        
+        def dump(path,status,value):
+            print path,status,value
+
+        tree.for_each_leaves(dump)
 
 if __name__ == '__main__':
     unittest.main()
