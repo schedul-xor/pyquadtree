@@ -3,7 +3,10 @@
 
 import unittest
 import quadtree.qt
+import redis
 
+rediscon = redis.Redis(host='127.0.0.1',port=6379,db=0)
+rediscon.flushdb()
 
 class TestFunctions(unittest.TestCase):
     def test_qt(self):
@@ -207,6 +210,25 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(r.children[0].children[2].status,quadtree.qt.NodeStatus.EXISTING_TERMINAL)
         self.assertEqual(r.children[0].children[3].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
         
+        tree.dump_to_redis('PREFIX',rediscon)
+        tree.load_from_redis('PREFIX',rediscon)
+
+        # After loading from redis, does it still work well?
+        r = tree.root
+        self.assertNotEqual(r.children[0],None)
+        self.assertNotEqual(r.children[1],None)
+        self.assertNotEqual(r.children[2],None)
+        self.assertNotEqual(r.children[3],None)
+        self.assertEqual(r.status,quadtree.qt.NodeStatus.SURELY_MIXED)
+        self.assertEqual(r.children[0].status,quadtree.qt.NodeStatus.SURELY_MIXED)
+        self.assertEqual(r.children[1].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+        self.assertEqual(r.children[2].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+        self.assertEqual(r.children[3].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+        self.assertEqual(r.children[0].children[0].status,quadtree.qt.NodeStatus.EXISTING_TERMINAL)
+        self.assertEqual(r.children[0].children[1].status,quadtree.qt.NodeStatus.EXISTING_TERMINAL)
+        self.assertEqual(r.children[0].children[2].status,quadtree.qt.NodeStatus.EXISTING_TERMINAL)
+        self.assertEqual(r.children[0].children[3].status,quadtree.qt.NodeStatus.EMPTY_TERMINAL)
+
         def dump(path,status,value):
             print path,status,value
 

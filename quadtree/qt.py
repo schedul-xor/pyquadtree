@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
 
+import json
+import xxhash
+
 class NodeStatus:
     GRAY = 0
     EXISTING_TERMINAL = 1
@@ -56,7 +59,8 @@ class Tree:
             new_child_node.path_cache = new_path_cache
 
             appending_node = new_child_node
-            
+
+        appending_node.value = value
         return appending_node
 
     @staticmethod
@@ -237,3 +241,54 @@ class Tree:
         if not is_leaf: return
 
         callback(node.path_cache,node.status,node.value)
+
+    def for_each_nodes(self,callback):
+        Tree.for_each_nodes_in_node(self.root,callback)
+
+    @staticmethod
+    def for_each_nodes_in_node(node,callback):
+        for i in range(4):
+            child = node.children[i]
+            if child != None:
+                Tree.for_each_nodes_in_node(child,callback)
+        
+        callback(node,node.path_cache,node.status,node.value)
+
+    def dump_to_redis(self,prefix,r):
+        def callback(node,path,status,value):
+            x = xxhash.xxh64()
+            x.update(''.join(map(str,path)))
+            name = prefix+'!'+x.digest()
+
+            r.hset(name,'status',status)
+            if value != None:
+                r.hset(name,'value',json.dumps(value))
+            children = []
+            for i in range(4):
+                if node.children[i] != None:
+                    children.append(i)
+            r.hset(name,'children',json.dumps(children))
+        self.for_each_nodes(callback)
+        
+    def load_from_redis(self,prefix,r):
+        self.root = Node(None)
+        self.for_each_found_elements_in_redis([],prefix,r)
+        
+    def for_each_found_elements_in_redis(self,path,prefix,r):
+        x = xxhash.xxh64()
+        x.update(''.join(map(str,path)))
+        name = prefix+'!'+x.digest()
+
+        h = r.hgetall(name)
+        status = int(h['status'])
+        children = json.loads(h['children'])
+        if status == NodeStatus.EXISTING_TERMINAL:
+            value = json.loads(h['value'])
+            self.add_terminal(path,True,value)
+        elif status == NodeStatus.EMPTY_TERMINAL:
+            self.add_terminal(path,False,None)
+
+        for child in children:
+            path.append(child)
+            self.for_each_found_elements_in_redis(path,prefix,r)
+            path.pop()
