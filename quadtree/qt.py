@@ -2,6 +2,7 @@
 
 import json
 import xxhash
+import base64
 
 class NodeStatus:
     GRAY = 0
@@ -258,7 +259,7 @@ class Tree:
         def callback(node,path,status,value):
             x = xxhash.xxh64()
             x.update(''.join(map(str,path)))
-            name = prefix+'!'+x.digest()
+            name = prefix+'!'+base64.b64encode(x.digest())
 
             r.hset(name,'status',status)
             if value != None:
@@ -277,7 +278,7 @@ class Tree:
     def for_each_found_elements_in_redis(self,path,prefix,r):
         x = xxhash.xxh64()
         x.update(''.join(map(str,path)))
-        name = prefix+'!'+x.digest()
+        name = prefix+'!'+base64.b64encode(x.digest())
 
         h = r.hgetall(name)
         status = int(h['status'])
