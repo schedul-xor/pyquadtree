@@ -284,6 +284,8 @@ class Tree:
         status = int(h['status'])
         children = json.loads(h['children'])
         if status == NodeStatus.EXISTING_TERMINAL:
+            if not h.has_key('value'):
+                raise Exception('value not found in path '+''.join(path)+' key '+name)
             value = json.loads(h['value'])
             self.add_terminal(path,True,value)
         elif status == NodeStatus.EMPTY_TERMINAL:
