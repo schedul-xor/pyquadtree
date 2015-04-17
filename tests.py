@@ -5,7 +5,7 @@ import unittest
 import quadtree.qt
 import redis
 
-rediscon = redis.Redis(host='127.0.0.1',port=6379,db=0)
+rediscon = redis.Redis(host='127.0.0.1',port=6379,db=15)
 rediscon.flushdb()
 
 class TestFunctions(unittest.TestCase):
