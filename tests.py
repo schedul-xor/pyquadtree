@@ -190,9 +190,9 @@ class TestFunctions(unittest.TestCase):
         
     def test_qt_5(self):
         tree = quadtree.qt.Tree()
-        tree.add_terminal([0,1],True,'terminal0123')
-        tree.add_terminal([0,2],True,'terminal0122')
-        tree.add_terminal([0,0],True,'terminal0120')
+        tree.add_terminal([0,1],True,'terminal01')
+        tree.add_terminal([0,2],True,'terminal02')
+        tree.add_terminal([0,0],True,'terminal00')
         tree.mark_unknown_leaves(False)
 
         r = tree.root
