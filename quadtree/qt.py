@@ -47,6 +47,7 @@ class Tree:
         self.found_appending_status['i'] = i
 
     def append_rest_of_the_nodes_required(self,adding_path,appending_node,appending_path_index,final_status,value):
+        assert(appending_node.status != NodeStatus.EXISTING_TERMINAL and appending_node.status != NodeStatus.EMPTY_TERMINAL) # You cannot add nodes to terminal
         for i in range(appending_path_index,len(adding_path)):
             appending_slot = adding_path[i]
             status = final_status
